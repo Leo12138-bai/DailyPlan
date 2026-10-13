@@ -1,0 +1,13 @@
+.gradle/
+.gradle-workspace/
+.gradle-tmp/
+**/build/
+local.properties
+.idea/
+*.iml
+captures/
+release-assets/
+*.jks
+*.keystore
+.externalNativeBuild/
+.cxx/
