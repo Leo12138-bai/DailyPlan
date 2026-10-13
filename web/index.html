@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f6fb" />
+    <meta name="description" content="每日计划：任务管理、重复周期与完成记录。" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="每日计划" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>每日计划</title>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="每日计划首页">
+          <span class="brand-mark">日</span>
+          <span><strong>每日计划</strong><small>把每一天安排得刚刚好</small></span>
+        </a>
+        <div id="account-chip" class="account-chip" hidden></div>
+      </header>
+
+      <main id="app" aria-live="polite">
+        <section id="auth-screen" class="auth-screen">
+          <div class="auth-card">
+            <span class="eyebrow">欢迎回来</span>
+            <h1>让计划随身同行</h1>
+            <p class="muted">登录后，任务和完成记录会在已登录的设备间同步。</p>
+            <form id="auth-form" class="stack">
+              <label>邮箱地址<input id="auth-email" type="email" autocomplete="email" required maxlength="254" placeholder="name@example.com" /></label>
+              <label>密码<input id="auth-password" type="password" autocomplete="current-password" required minlength="6" placeholder="至少 6 位" /></label>
+              <button id="auth-submit" class="button primary" type="submit">登录</button>
+            </form>
+            <div class="auth-links">
+              <button id="auth-toggle" class="text-button" type="button">创建新账号</button>
+              <button id="auth-reset" class="text-button" type="button">忘记密码</button>
+            </div>
+            <p id="auth-message" class="message" role="status"></p>
+            <p id="config-message" class="warning" hidden>Firebase 尚未配置。请先按项目 README 添加网页配置。</p>
+          </div>
+        </section>
+
+        <section id="plan-screen" hidden>
+          <section class="welcome-row">
+            <div><span class="eyebrow" id="today-label"></span><h1 id="page-title">今日安排</h1></div>
+            <button id="add-task" class="button primary" type="button">＋ 新建任务</button>
+          </section>
+          <nav class="tabs" aria-label="主导航">
+            <button data-tab="today" class="tab active" type="button">今日</button>
+            <button data-tab="plans" class="tab" type="button">计划</button>
+            <button data-tab="history" class="tab" type="button">完成记录</button>
+            <button data-tab="settings" class="tab" type="button">设置</button>
+          </nav>
+          <section id="content" class="content"></section>
+        </section>
+      </main>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <dialog id="task-dialog" class="task-dialog">
+      <form id="task-form" method="dialog" class="task-form">
+        <div class="dialog-heading"><div><span class="eyebrow">计划详情</span><h2 id="task-dialog-title">新建任务</h2></div><button class="icon-button" value="cancel" aria-label="关闭" type="submit">×</button></div>
+        <input id="task-external-id" type="hidden" />
+        <label>任务名称<input id="task-title" required maxlength="500" placeholder="例如：阅读 20 分钟" /></label>
+        <label>任务备注<textarea id="task-description" rows="3" maxlength="2000" placeholder="补充说明（可选）"></textarea></label>
+        <div class="form-grid">
+          <label>任务类型<select id="task-type"><option value="daily">每日</option><option value="once">单次</option><option value="custom">自定义周期</option></select></label>
+          <label>任务分类<select id="task-category"></select></label>
+        </div>
+        <div id="once-fields"><label>执行日期<input id="once-date" type="date" required /></label></div>
+        <div id="repeat-fields" class="form-grid">
+          <label>开始日期<input id="task-start" type="date" required /></label>
+          <label>结束日期（可选）<input id="task-end" type="date" /></label>
+        </div>
+        <div id="custom-fields" class="stack">
+          <label>重复方式<select id="repeat-kind"><option value="weekly">每周指定星期</option><option value="interval">每隔 N 天</option><option value="monthly">每月指定日期</option></select></label>
+          <div id="weekly-fields"><span class="field-label">重复星期</span><div class="weekday-picker">
+            <label><input type="checkbox" value="1" class="weekday" />一</label><label><input type="checkbox" value="2" class="weekday" />二</label><label><input type="checkbox" value="3" class="weekday" />三</label><label><input type="checkbox" value="4" class="weekday" />四</label><label><input type="checkbox" value="5" class="weekday" />五</label><label><input type="checkbox" value="6" class="weekday" />六</label><label><input type="checkbox" value="7" class="weekday" />日</label>
+          </div></div>
+          <label id="interval-fields">间隔天数<input id="interval-days" type="number" min="1" max="36500" value="3" /></label>
+          <label id="monthly-fields">每月执行日<input id="monthly-day" type="number" min="1" max="31" value="1" /></label>
+        </div>
+        <fieldset class="reminder-box"><legend>提醒</legend>
+          <label class="check-row"><input id="reminder-enabled" type="checkbox" />开启浏览器提醒</label>
+          <div class="form-grid"><label>提醒时间<input id="reminder-time" type="time" value="09:00" /></label><label>提前提醒<select id="reminder-offset"><option value="0">准时</option><option value="5">提前 5 分钟</option><option value="10">提前 10 分钟</option><option value="30">提前 30 分钟</option></select></label></div>
+        </fieldset>
+        <p id="task-error" class="error-text"></p>
+        <div class="dialog-actions"><button class="button secondary" value="cancel" type="submit">取消</button><button id="task-save" class="button primary" value="save" type="submit">保存任务</button></div>
+      </form>
+    </dialog>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
